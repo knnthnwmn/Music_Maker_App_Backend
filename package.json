@@ -1,0 +1,27 @@
+{
+  "name": "music_maker_app_backend",
+  "version": "1.0.0",
+  "description": "Music Maker App",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knnthnwmn/Music_Maker_App_Backend.git"
+  },
+  "author": "Kenneth Newman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/knnthnwmn/Music_Maker_App_Backend/issues"
+  },
+  "homepage": "https://github.com/knnthnwmn/Music_Maker_App_Backend#readme",
+  "dependencies": {
+    "config": "^3.3.6",
+    "express": "^4.17.1",
+    "joi": "^17.5.0",
+    "mongoose": "^6.1.2",
+    "nodemon": "^2.0.15"
+  }
+}
