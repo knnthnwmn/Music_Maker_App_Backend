@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
-
-
-
-
 // const { productSchema } = require("./product");
+
+
+
+
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, minlength: 2, maxlength: 50 },

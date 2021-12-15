@@ -1,83 +1,179 @@
-const { User } = require("../models/user");
-const { Product, validate } = require("../models/product");
+const { User, validateUser, validateLogin } = require("../models/userSchema");
+const bcrypt = require("bcrypt");
+const auth = require("../middleware/auth");
+const admin = require("../middleware/admin");
 const express = require("express");
 const router = express.Router();
+const config = require("config");
+const jwt = require("jsonwebtoken");
+const fileUpload = require("../middleware/fileUpload");
+// const { Post, validatePost } = require("../models/postSchema");
 
-router.post("/:userId/shoppingcart/:productId", async (req, res) => {
+
+router.get("/", async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
-    if (!user)
-      return res
-        .status(400)
-        .send(`The user with id "${req.params.userId}" does not exist.`);
-
-    const product = await Product.findById(req.params.productId);
-    if (!product)
-      return res
-        .status(400)
-        .send(`The product with id "${req.params.productId}"does not exist.`);
-
-    user.shoppingCart.push(product);
-
-    await user.save();
-    return res.send(user.shoppingCart);
+    const users = await User.find();
+    return res.send(users);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }
 });
 
-router.put("/:userId/shoppingcart/:productId", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const { error } = validate(req.body);
+    const user = await User.findById(req.params.id);
+    if (!user)
+      return res
+        .status(400)
+        .send(`The product with id "${req.params.id}" does not exist`);
+
+    return res.send(user);
+  } catch (ex) {
+    return res.status(500).send(`Internal Server Error: ${ex}`);
+  }
+});
+
+router.post("/", 
+fileUpload.single("image"), 
+async (req, res) => {
+  try {
+    const { error } = validateUser(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    let user = await User.findOne({ email: req.body.email });
+    if (user) return res.status(400).send("User already registered.");
+
+    const salt = await bcrypt.genSalt(10);
+    user = new User({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      password: await bcrypt.hash(req.body.password, salt),
+      image: req.file.path,
+    });
+    
+    await user.save();
+    const token = jwt.sign(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        isAdmin: user.isAdmin,
+        image: user.image,
+      },
+      config.get("jwtsecret")
+    );
+    return res
+      .header("x-auth-token", token)
+      .header("access-control-expose-headers", "x-auth-token")
+      .send({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        image: user.image,
+      });
+  } catch (ex) {
+    return res.status(500).send(`Internal Server Error: ${ex}`);
+  }
+});
+
+router.put("/:id", auth, async (req, res) => {
+  try {
+    const { error } = validateUser(req.body);
     if (error) return res.status(400).send(error);
 
-    const user = await User.findById(req.params.userId);
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        password: req.body.password
+      },
+      { new: true }
+    );
     if (!user)
       return res
         .status(400)
-        .send(`The user with id "${req.params.userId}" does not exist.`);
-
-    const product = user.shoppingCart.id(req.params.productId);
-    if (!product)
-      return res
-        .status(400)
-        .send(
-          `The product with id "${req.params.productId}" does not in the users shopping cart.`
-        );
-
-    product.name = req.body.name;
-    product.description = req.body.description;
-    product.category = req.body.category;
-    product.price = req.body.price;
-    product.dateModified = Date.now();
+        .send(`The user with id "${req.params.id}" does not exist.`);
 
     await user.save();
-    return res.send(product);
+    const token = jwt.sign(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+      },
+      config.get("jwtsecret")
+    );
+    return res.send(token);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }
 });
 
-router.delete("/:userId/shoppingcart/:productId", async (req, res) => {
+router.delete("/:id", [auth, admin], async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findByIdAndDelete(req.params.id);
+
     if (!user)
       return res
         .status(400)
-        .send(`The user with id "${req.params.userId}" does not exist.`);
+        .send(`The user with id "${req.params.id}" does not exist.`);
 
-    let product = user.shoppingCart.id(req.params.productId);
-    if (!product)
+    return res.send(user);
+  } catch (ex) {
+    return res.status(500).send(`Internal Server Error: ${ex}`);
+  }
+});
+
+router.post("/:id/posts", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user)
       return res
         .status(400)
-        .send(
-          `The product with id "${req.params.productId}" does not in the users shopping cart.`
-        );
+        .send(`The user with id "${req.params.id}" does not exist.`);
 
-    product = await product.remove();
-
+    const post = new Post({
+      description: req.body.description,
+      likes: 0,
+    });
+    if (!post) return res.status(400).send(`Reply doesnt exist.`);
+    user.posts.push(post);
     await user.save();
-    return res.send(product);
+    return res.send(post);
+  } catch (ex) {
+    return res.status(500).send(`Internal Server Error: ${ex}`);
+  }
+});
+
+router.post("/login", async (req, res) => {
+  try {
+    const { error } = validateLogin(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    let user = await User.findOne({ email: req.body.email });
+    if (!user) return res.status(400).send(`Invalid email or password.`);
+
+    const validPassword = await bcrypt.compare(
+      req.body.password,
+      user.password
+    );
+    if (!validPassword)
+      return res.status(400).send("Invalid email or password.");
+
+    const token = jwt.sign(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        image: user.image,
+        id: user._id
+      },
+      config.get("jwtsecret")
+    );
+    return res.send(token);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }
