@@ -34,7 +34,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", 
-fileUpload.single("audio"), 
+// fileUpload.single("audio"), 
 async (req, res) => {
   try {
     const { error } = validateUser(req.body);
@@ -49,7 +49,7 @@ async (req, res) => {
       lastName: req.body.lastName,
       email: req.body.email,
       password: await bcrypt.hash(req.body.password, salt),
-      audio: req.file.path,
+      // audio: req.file.path,
     });
     
     await user.save();
@@ -70,7 +70,7 @@ async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        audio: user.audio,
+        // audio: user.audio,
       });
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
@@ -111,6 +111,46 @@ router.put("/:id", auth, async (req, res) => {
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }
 });
+
+router.put("/:id/mixes", 
+[fileUpload.single("audio"), 
+], async (req, res) => {
+  try {
+    const { error } = validateUser(req.body);
+    if (error) return res.status(400).send(error);
+
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      {
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        password: req.body.password,
+        audio: req.path.audio
+      },
+      { new: true }
+    );
+    if (!user)
+      return res
+        .status(400)
+        .send(`The user with id "${req.params.id}" does not exist.`);
+
+    await user.save();
+    const token = jwt.sign(
+      {
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        audio: user.audio
+      },
+      config.get("jwtsecret")
+    );
+    return res.send(token);
+  } catch (ex) {
+    return res.status(500).send(`Internal Server Error: ${ex}`);
+  }
+});
+
 
 router.delete("/:id", [auth, admin], async (req, res) => {
   try {

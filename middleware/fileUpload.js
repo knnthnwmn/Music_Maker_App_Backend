@@ -2,9 +2,9 @@ const multer = require("multer");
 const uuid = require("uuid");
 
 const MIME_TYPE_MAP = {
-    "audio/mp3": "mp3",
-    "audio/wav": "wav",
-    "audio/mp4": "mp4",
+    "audio/mpeg": "mp3",
+    "audio/x-wav": "wav",
+    "video/mp4": "mp4",
 };
 
 const fileUpload = multer({
