@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
-// const { productSchema } = require("./product");
+// const { tracksSchema } = require("./product");
 
-
-
-
+const tracksSchema = new mongoose.Schema({
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+});
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, minlength: 2, maxlength: 50 },
@@ -19,19 +20,22 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, maxlength: 200, minlength: 5 },
   isAdmin: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
-  audio: {type: String, default:""}
+  audio: { type: String, default: "" },
+  tracks: { type: [tracksSchema], default: [] },
 });
 
 userSchema.methods.generateAuthToken = function () {
-  return jwt.sign({
-    firstName: this.firstName,
-    lastName: this.lastName,
-    email: this.email,
-    password: this.password,
-    isAdmin: this.isAdmin,
-    audio: this.audio,
-  },
-  config.get("jwtsecret"));
+  return jwt.sign(
+    {
+      firstName: this.firstName,
+      lastName: this.lastName,
+      email: this.email,
+      password: this.password,
+      isAdmin: this.isAdmin,
+      audio: this.audio,
+    },
+    config.get("jwtsecret")
+  );
 };
 
 const User = mongoose.model("User", userSchema);
