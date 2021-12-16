@@ -34,7 +34,7 @@ router.get("/:id", async (req, res) => {
 });
 
 router.post("/", 
-fileUpload.single("image"), 
+fileUpload.single("audio"), 
 async (req, res) => {
   try {
     const { error } = validateUser(req.body);
@@ -49,7 +49,7 @@ async (req, res) => {
       lastName: req.body.lastName,
       email: req.body.email,
       password: await bcrypt.hash(req.body.password, salt),
-      image: req.file.path,
+      audio: req.file.path,
     });
     
     await user.save();
@@ -59,7 +59,7 @@ async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         isAdmin: user.isAdmin,
-        image: user.image,
+        audio: user.audio,
       },
       config.get("jwtsecret")
     );
@@ -70,7 +70,7 @@ async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        image: user.image,
+        audio: user.audio,
       });
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
@@ -168,7 +168,7 @@ router.post("/login", async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        image: user.image,
+        audio: user.audio,
         id: user._id
       },
       config.get("jwtsecret")

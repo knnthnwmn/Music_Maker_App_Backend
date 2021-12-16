@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, maxlength: 200, minlength: 5 },
   isAdmin: { type: Boolean, default: false },
   isAdmin: { type: Boolean, default: false },
-  image: {type: String, default:""}
+  audio: {type: String, default:""}
 });
 
 userSchema.methods.generateAuthToken = function () {
@@ -29,7 +29,7 @@ userSchema.methods.generateAuthToken = function () {
     email: this.email,
     password: this.password,
     isAdmin: this.isAdmin,
-    image: this.image,
+    audio: this.audio,
   },
   config.get("jwtsecret"));
 };
@@ -42,7 +42,7 @@ function validateUser(user) {
     lastName: Joi.string().min(2).max(50).required(),
     email: Joi.string().min(5).max(255).required().email(),
     password: Joi.string().min(5).max(1024).required(),
-    image: Joi.string(),
+    audio: Joi.string(),
   });
   return schema.validate(user);
 }
