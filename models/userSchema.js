@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
-// const { tracksSchema } = require("./product");
+const fileUpload = require("../middleware/fileUpload");
+const { trackSchema } = require("./tracksSchema");
 
-const tracksSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
+const trackSchema = new mongoose.Schema({
+  audioFiles: { type: fileUpload, required: true },
 });
 
 const userSchema = new mongoose.Schema({
@@ -18,10 +18,8 @@ const userSchema = new mongoose.Schema({
     maxlength: 255,
   },
   password: { type: String, required: true, maxlength: 200, minlength: 5 },
-  isAdmin: { type: Boolean, default: false },
-  isAdmin: { type: Boolean, default: false },
-  audio: { type: String, default: "" },
-  tracks: { type: [tracksSchema], default: [] },
+  isAdmin: { type: Boolean, default: false }, 
+  audioFiles: { type: [trackSchema], default: [] },
 });
 
 userSchema.methods.generateAuthToken = function () {
@@ -32,7 +30,7 @@ userSchema.methods.generateAuthToken = function () {
       email: this.email,
       password: this.password,
       isAdmin: this.isAdmin,
-      audio: this.audio,
+      audioFiles: this.audioFiles
     },
     config.get("jwtsecret")
   );
@@ -46,7 +44,6 @@ function validateUser(user) {
     lastName: Joi.string().min(2).max(50).required(),
     email: Joi.string().min(5).max(255).required().email(),
     password: Joi.string().min(5).max(1024).required(),
-    audio: Joi.string(),
   });
   return schema.validate(user);
 }

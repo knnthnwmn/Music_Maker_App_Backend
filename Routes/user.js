@@ -7,8 +7,8 @@ const router = express.Router();
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const fileUpload = require("../middleware/fileUpload");
+const { Track } = require("../models/tracksSchema");
 // const { Post, validatePost } = require("../models/postSchema");
-
 
 router.get("/", async (req, res) => {
   try {
@@ -33,9 +33,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", 
-// fileUpload.single("audio"), 
-async (req, res) => {
+router.post("/", fileUpload.single("audio"), async (req, res) => {
   try {
     const { error } = validateUser(req.body);
     if (error) return res.status(400).send(error.details[0].message);
@@ -49,29 +47,15 @@ async (req, res) => {
       lastName: req.body.lastName,
       email: req.body.email,
       password: await bcrypt.hash(req.body.password, salt),
-      // audio: req.file.path,
     });
-    
+    const track = new Track({
+      audio: req.file.path,
+      description: req.body.description,
+    });
+    user.audioFiles.push(track);
     await user.save();
-    const token = jwt.sign(
-      {
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        isAdmin: user.isAdmin,
-        audio: user.audio,
-      },
-      config.get("jwtsecret")
-    );
-    return res
-      .header("x-auth-token", token)
-      .header("access-control-expose-headers", "x-auth-token")
-      .send({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        // audio: user.audio,
-      });
+    const token = user.generateAuthToken();
+    return res.send(token);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }
@@ -88,7 +72,7 @@ router.put("/:id", auth, async (req, res) => {
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
-        password: req.body.password
+        password: req.body.password,
       },
       { new: true }
     );
@@ -112,9 +96,7 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
-router.put("/:id/mixes", 
-[fileUpload.single("audio"), 
-], async (req, res) => {
+router.put("/:id/mixes", [fileUpload.single("audio")], async (req, res) => {
   try {
     const { error } = validateUser(req.body);
     if (error) return res.status(400).send(error);
@@ -126,7 +108,7 @@ router.put("/:id/mixes",
         lastName: req.body.lastName,
         email: req.body.email,
         password: req.body.password,
-        audio: req.path.audio
+        audio: req.path.audio,
       },
       { new: true }
     );
@@ -141,7 +123,7 @@ router.put("/:id/mixes",
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        audio: user.audio
+        audio: user.audio,
       },
       config.get("jwtsecret")
     );
@@ -150,7 +132,6 @@ router.put("/:id/mixes",
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }
 });
-
 
 router.delete("/:id", [auth, admin], async (req, res) => {
   try {
@@ -209,7 +190,7 @@ router.post("/login", async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         audio: user.audio,
-        id: user._id
+        id: user._id,
       },
       config.get("jwtsecret")
     );

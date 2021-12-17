@@ -2,15 +2,17 @@ const connectDB = require('./startup/db');
 const express = require('express');
 const app = express();
 const users = require('./routes/user');
+const tracks = require('./routes/tracks');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+
 
 connectDB();
 
 app.use(cors());
 app.use(express.json());
-app.use('/api/users', users);
+app.use('/api/users', users, tracks);
 
 app.use("/uploads/audio", express.static(path.join("uploads", "audio")));
 app.use((error, req, res, next) => {
