@@ -1,24 +1,23 @@
 const mongoose = require("mongoose");
 const Joi = require("joi");
+const fileUpload = require("../middleware/fileUpload");
 
-const postSchema = new mongoose.Schema({
-  userId: { type: String },
-  picture: { type: String },
-  description: { type: String, required: true, minlength: 5, maxlength: 50 },
-  likes: { type: Number, default: 0 },
+const tracksSchema = new mongoose.Schema({
+  audio: { type: fileUpload },
+ description: { type: String, required: true, minlength: 5, maxlength: 50 },
+
 });
 
-const Post = mongoose.model("Post", postSchema);
+const Tracks = mongoose.model("Tracks", tracksSchema);
 
-function validatePost(post) {
+function validateTracks(tracks) {
   const schema = Joi.object({
-    // picture: Joi.object().require(),
+    audio: Joi.object().require(),
     description: Joi.string().required(),
-    likes: Joi.number(),
   });
-  return schema.validate(post);
+  return schema.validate(tracks);
 }
 
-exports.Post = Post;
-exports.validatePost = validatePost;
-exports.postSchema = postSchema;
+exports.Tracks = Tracks;
+exports.validateTracks = validateTracks;
+exports.tracksSchema = tracksSchema;
