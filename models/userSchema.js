@@ -2,10 +2,8 @@ const mongoose = require("mongoose");
 const Joi = require("joi");
 const fileUpload = require("../middleware/fileUpload");
 const { trackSchema } = require("./tracksSchema");
+const jwt = require("jsonwebtoken"); 
 
-const trackSchema = new mongoose.Schema({
-  audioFiles: { type: fileUpload, required: true },
-});
 
 const userSchema = new mongoose.Schema({
   firstName: { type: String, required: true, minlength: 2, maxlength: 50 },
@@ -18,8 +16,8 @@ const userSchema = new mongoose.Schema({
     maxlength: 255,
   },
   password: { type: String, required: true, maxlength: 200, minlength: 5 },
+  audioFiles: { type: [trackSchema], default: [] }, 
   isAdmin: { type: Boolean, default: false }, 
-  audioFiles: { type: [trackSchema], default: [] },
 });
 
 userSchema.methods.generateAuthToken = function () {

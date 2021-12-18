@@ -3,16 +3,14 @@ const Joi = require("joi");
 const fileUpload = require("../middleware/fileUpload");
 
 const trackSchema = new mongoose.Schema({
-  audio: { type: String, default:"", required: true},
- description: { type: String, minlength: 5, maxlength: 50, default:""},
+  audioFiles: { type: String, default:"", required: true},
 });
 
 const Track = mongoose.model("Track", trackSchema);
 
 function validateTrack(track) {
   const schema = Joi.object({
-    audio: Joi.object().required(),
-    description: Joi.string(),
+    audioFiles: Joi.object().required(),
   });
   return schema.validate(track);
 }

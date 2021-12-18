@@ -7,8 +7,7 @@ const router = express.Router();
 const config = require("config");
 const jwt = require("jsonwebtoken");
 const fileUpload = require("../middleware/fileUpload");
-const { Track } = require("../models/tracksSchema");
-// const { Post, validatePost } = require("../models/postSchema");
+const { Track, validateTrack } = require("../models/tracksSchema");
 
 router.get("/", async (req, res) => {
   try {
@@ -49,8 +48,7 @@ router.post("/", fileUpload.single("audio"), async (req, res) => {
       password: await bcrypt.hash(req.body.password, salt),
     });
     const track = new Track({
-      audio: req.file.path,
-      description: req.body.description,
+      audioFiles: req.file.path,
     });
     user.audioFiles.push(track);
     await user.save();
@@ -108,7 +106,7 @@ router.put("/:id/mixes", [fileUpload.single("audio")], async (req, res) => {
         lastName: req.body.lastName,
         email: req.body.email,
         password: req.body.password,
-        audio: req.path.audio,
+        audioFiles: req.path.audioFiles,
       },
       { new: true }
     );
@@ -123,10 +121,14 @@ router.put("/:id/mixes", [fileUpload.single("audio")], async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        audio: user.audio,
+        audioFiles: user.audioFiles,
       },
       config.get("jwtsecret")
     );
+    const track = new Track({
+      audio: req.file.path,
+    });
+    user.audioFiles.push(track);
     return res.send(token);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
@@ -189,7 +191,7 @@ router.post("/login", async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        audio: user.audio,
+        audioFiles: user.audioFiles,
         id: user._id,
       },
       config.get("jwtsecret")
