@@ -3,6 +3,7 @@ const Joi = require("joi");
 const fileUpload = require("../middleware/fileUpload");
 const { trackSchema } = require("./tracksSchema");
 const jwt = require("jsonwebtoken"); 
+const config = require("config")
 
 
 const userSchema = new mongoose.Schema({

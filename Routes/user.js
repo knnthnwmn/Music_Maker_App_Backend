@@ -47,12 +47,18 @@ router.post("/", fileUpload.single("audio"), async (req, res) => {
       email: req.body.email,
       password: await bcrypt.hash(req.body.password, salt),
     });
-    const track = new Track({
-      audioFiles: req.file.path,
-    });
-    user.audioFiles.push(track);
+    // const track = new Track({
+    //   audioFiles: req.file.path,
+    // });
+    // user.audioFiles.push(track);
     await user.save();
-    const token = user.generateAuthToken();
+
+    let token;
+    try {
+      token = user.generateAuthToken();
+    } catch (error) {
+      return res.status(540).send(`Generate Auth Internal error: ${error}`);
+    }
     return res.send(token);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
@@ -106,16 +112,18 @@ router.put("/:id/mixes", [fileUpload.single("audio")], async (req, res) => {
         lastName: req.body.lastName,
         email: req.body.email,
         password: req.body.password,
-        audioFiles: req.path.audioFiles,
       },
       { new: true }
     );
     if (!user)
-      return res
-        .status(400)
-        .send(`The user with id "${req.params.id}" does not exist.`);
-
-    await user.save();
+    return res
+    .status(400)
+    .send(`The user with id "${req.params.id}" does not exist.`);
+    
+    const track = new Track({
+      audio: req.file.path,
+    });
+    user.audioFiles.push(track);
     const token = jwt.sign(
       {
         firstName: user.firstName,
@@ -125,11 +133,9 @@ router.put("/:id/mixes", [fileUpload.single("audio")], async (req, res) => {
       },
       config.get("jwtsecret")
     );
-    const track = new Track({
-      audio: req.file.path,
-    });
-    user.audioFiles.push(track);
+    await user.save();
     return res.send(token);
+    // return res.send(user);
   } catch (ex) {
     return res.status(500).send(`Internal Server Error: ${ex}`);
   }

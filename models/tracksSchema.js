@@ -3,7 +3,7 @@ const Joi = require("joi");
 const fileUpload = require("../middleware/fileUpload");
 
 const trackSchema = new mongoose.Schema({
-  audioFiles: { type: String, default:"", required: true},
+  audio: { type: String, default:"", required: true},
 });
 
 const Track = mongoose.model("Track", trackSchema);
